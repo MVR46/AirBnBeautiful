@@ -1,0 +1,79 @@
+# ===== Backend (Python) =====
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/venv/
+backend/env/
+backend/ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Backend Data
+backend/data/*.npy
+backend/data/*.csv
+backend/data/*.db
+
+# Model caches
+.cache/
+*.pt
+*.pth
+
+# ===== Frontend (Node.js/React) =====
+# Dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===== Environment =====
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+
+# ===== IDEs =====
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Misc =====
+*.bak
+*.tmp
