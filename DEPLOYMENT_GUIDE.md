@@ -55,6 +55,8 @@ Before starting, ensure you have:
 
 ### Step 1.2: Deploy on Railway
 
+> **Important:** The backend includes a `nixpacks.toml` file that installs system dependencies required for OpenCV and YOLO (libGL, libGLib, etc.). Railway will automatically detect and use this configuration.
+
 1. **Go to [railway.app](https://railway.app)** and sign in with GitHub
 
 2. **Click "New Project"** → **"Deploy from GitHub repo"**
@@ -327,7 +329,29 @@ Before starting, ensure you have:
 - Clear your browser cache or try incognito mode
 - Flush DNS: `ipconfig /flushdns` (Windows) or `sudo dscacheutil -flushcache` (Mac)
 
-### Issue 4: Railway build fails
+### Issue 4: Railway build fails with OpenCV/libGL error
+
+**Symptoms:** Deployment fails with error: `ImportError: libGL.so.1: cannot open shared object file`
+
+**Solution:**
+- This error occurs when OpenCV system dependencies are missing
+- **Fix:** Ensure `backend/nixpacks.toml` file exists with the following content:
+  ```toml
+  [phases.setup]
+  aptPkgs = [
+      "libgl1-mesa-glx",
+      "libglib2.0-0",
+      "libsm6",
+      "libxext6",
+      "libxrender-dev",
+      "libgomp1",
+      "libglu1-mesa"
+  ]
+  ```
+- Railway will automatically detect and install these dependencies
+- Redeploy after adding the file
+
+### Issue 5: Railway build fails (general)
 
 **Symptoms:** Deployment fails with module import errors
 
@@ -337,7 +361,7 @@ Before starting, ensure you have:
 - Ensure Python version is set to 3.9
 - Some ML models may need more memory - upgrade Railway plan if needed
 
-### Issue 5: Vercel build fails
+### Issue 6: Vercel build fails
 
 **Symptoms:** Deployment fails during build
 
@@ -347,7 +371,7 @@ Before starting, ensure you have:
 - Try building locally: `npm run build`
 - Check if `VITE_API_BASE_URL` is set correctly
 
-### Issue 6: Environment variables not updating
+### Issue 7: Environment variables not updating
 
 **Symptoms:** Changes to env vars don't take effect
 
