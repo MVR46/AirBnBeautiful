@@ -74,6 +74,12 @@ frontend/.env
 .DS_Store
 Thumbs.db
 
+# ===== Development Files (Not for Production) =====
+notebooks/
+scripts/
+test-connection.html
+backend/test_api.py
+
 # ===== Misc =====
 *.bak
 *.tmp

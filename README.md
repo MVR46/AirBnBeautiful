@@ -1,290 +1,317 @@
-# Madrid Airbnb ML Demo
+# AirBnBeautiful
 
-A full-stack machine learning application showcasing advanced ML techniques for Airbnb property search and management. Features NLP-powered semantic search, RAG-based conversational AI, computer vision amenity detection, and price optimization.
+A production-ready full-stack machine learning application showcasing advanced ML techniques for Airbnb property search and management.
 
-![Project Banner](https://img.shields.io/badge/ML-Demo-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green) ![React](https://img.shields.io/badge/React-18-61DAFB) ![Python](https://img.shields.io/badge/Python-3.9+-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-green)](https://fastapi.tiangolo.com) [![React](https://img.shields.io/badge/React-18-61DAFB)](https://react.dev) [![Python](https://img.shields.io/badge/Python-3.9+-blue)](https://python.org) [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org) [![Railway](https://img.shields.io/badge/Deploy-Railway-blueviolet)](https://railway.app) [![Vercel](https://img.shields.io/badge/Deploy-Vercel-black)](https://vercel.com)
+
+---
 
 ## ✨ Features
 
 ### For Guests
-- **🔍 Semantic Search**: Natural language search using sentence transformers and hybrid ranking (semantic + lexical + rating + price)
+- **🔍 Semantic Search**: Natural language search using sentence transformers and hybrid ranking
 - **💬 Neighborhood Chat**: RAG-powered Q&A about neighborhoods using OpenAI GPT-4o-mini
-- **📍 Interactive Map**: Explore listings with geolocation and filtering
+- **📍 Interactive Listings**: Explore properties with detailed information and filtering
 
 ### For Landlords
 - **📸 CV Amenity Detection**: Automatically detect amenities from property photos using YOLOv8 and OWL-ViT
 - **💰 Price Optimization**: ML-powered price suggestions with feature importance analysis
 - **📊 Smart Recommendations**: Get personalized amenity recommendations to reach target prices
 
+---
+
 ## 🛠️ Tech Stack
 
 ### Backend
-- **FastAPI** - Modern Python web framework
+- **FastAPI** - Modern async Python web framework
 - **PyTorch** - Deep learning framework
 - **Sentence Transformers** - Semantic embeddings (all-MiniLM-L6-v2)
 - **spaCy** - NLP and entity extraction
 - **Scikit-learn** - ML models (RandomForest, TF-IDF)
 - **YOLOv8** - Object detection
-- **Transformers** - OWL-ViT zero-shot detection
+- **Transformers (OWL-ViT)** - Zero-shot detection
 - **OpenAI API** - GPT-4o-mini for conversational AI
+- **SQLite** - Listings database
 
 ### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type-safe JavaScript
+- **React 18** + **TypeScript** - Type-safe UI framework
 - **Vite** - Build tool and dev server
-- **Tailwind CSS** - Utility-first CSS
-- **shadcn/ui** - Beautiful component library
-- **React Router** - Navigation
-- **TanStack Query** - Data fetching
+- **Tailwind CSS** + **shadcn/ui** - Modern component library
+- **React Router** - Client-side navigation
 
-### Data & ML
-- **SQLite** - Listings database
-- **NumPy** - Numerical computing
-- **Pandas** - Data manipulation
+### ML & Data
 - **1000+ Madrid Airbnb listings** with real data
+- **Automatic data preparation** on first deployment
+- **Cached embeddings** for fast subsequent deployments
 
-## 📋 Prerequisites
-
-- **Python 3.9 or higher**
-- **Node.js 18 or higher**
-- **4GB RAM minimum** (8GB recommended for CV features)
-- **OpenAI API Key** (optional, only for RAG chat feature)
+---
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+### Option 1: Deploy to Production (Recommended)
 
+Deploy the full application to Railway (backend) and Vercel (frontend):
+
+👉 **See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for complete deployment guide
+
+**Summary:**
+1. Deploy backend to Railway (5-10 min first time)
+2. Deploy frontend to Vercel (2-3 min)
+3. Connect them with environment variables
+
+**Optional:** Configure custom domain with Namecheap  
+👉 **See [docs/CUSTOM_DOMAIN.md](docs/CUSTOM_DOMAIN.md)**
+
+### Option 2: Run Locally
+
+For local development and testing:
+
+👉 **See [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md)** for local setup instructions
+
+**Quick setup:**
 ```bash
-git clone https://github.com/yourusername/AirBnBeautiful.git
-cd AirBnBeautiful
+# Backend
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+
+# Frontend (in new terminal)
+cd frontend
+npm install
+npm run dev
 ```
 
-### 2. Run Setup (First Time Only)
-
-```bash
-./scripts/setup.sh
-```
-
-This will:
-- Create Python virtual environment
-- Install all Python dependencies
-- Download spaCy language model
-- Initialize the database
-- Install frontend dependencies
-- Create environment files
-
-### 3. Configure Environment (Optional)
-
-For the RAG neighborhood chat feature, add your OpenAI API key:
-
-```bash
-# Edit backend/.env
-OPENAI_API_KEY=sk-your-actual-key-here
-```
-
-**Note**: All other features work without an API key!
-
-### 4. Start the Application
-
-You have two options:
-
-**Option A: Start Everything Together**
-```bash
-./scripts/start-all.sh
-```
-
-**Option B: Start Services Separately**
-```bash
-# Terminal 1 - Backend
-./scripts/start-backend.sh
-
-# Terminal 2 - Frontend
-./scripts/start-frontend.sh
-```
-
-### 5. Access the Application
-
-- **Frontend**: http://localhost:8080
-- **Backend API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs
+---
 
 ## 📁 Project Structure
 
 ```
 AirBnBeautiful/
-├── backend/                  # FastAPI backend
-│   ├── main.py              # Main application entry point
-│   ├── models.py            # Pydantic models
-│   ├── data_service.py      # Database operations
-│   ├── nlp_service.py       # NLP search & parsing
-│   ├── rag_service.py       # RAG neighborhood chat
-│   ├── cv_service.py        # Computer vision detection
-│   ├── price_service.py     # Price optimization
-│   ├── prepare_data.py      # Database initialization
-│   ├── requirements.txt     # Python dependencies
-│   ├── data/                # SQLite DB and embeddings
-│   └── venv/                # Virtual environment (created by setup)
+├── backend/                     # FastAPI backend
+│   ├── main.py                 # Application entry point
+│   ├── models.py               # Pydantic models
+│   ├── data_service.py         # Database operations
+│   ├── nlp_service.py          # NLP search & parsing
+│   ├── rag_service.py          # RAG neighborhood chat
+│   ├── cv_service.py           # Computer vision detection
+│   ├── price_service.py        # Price optimization
+│   ├── prepare_data.py         # Database initialization
+│   ├── start.sh                # Startup script with auto data prep
+│   ├── requirements.txt        # Python dependencies
+│   ├── Procfile                # Railway start command
+│   ├── railway.json            # Railway configuration
+│   ├── nixpacks.toml           # System dependencies
+│   ├── Dockerfile              # Container configuration
+│   └── data/                   # SQLite DB (generated on deployment)
 │
-├── frontend/                 # React TypeScript frontend
+├── frontend/                    # React TypeScript frontend
 │   ├── src/
-│   │   ├── pages/           # Main pages (GuestSearch, Landlord, etc.)
-│   │   ├── components/      # Reusable components
-│   │   ├── lib/             # API client and utilities
-│   │   └── main.tsx         # Application entry point
-│   ├── package.json         # Node.js dependencies
-│   └── vite.config.ts       # Vite configuration
+│   │   ├── pages/              # Main pages (GuestSearch, Landlord, etc.)
+│   │   ├── components/         # Reusable components
+│   │   ├── lib/                # API client and utilities
+│   │   └── main.tsx            # Application entry point
+│   ├── package.json            # Node.js dependencies
+│   ├── vite.config.ts          # Vite configuration
+│   └── .env.production         # Production environment config
 │
-├── docs/                     # Documentation
-│   ├── API_REFERENCE.md     # Complete API documentation
-│   └── SETUP_GUIDE.md       # Detailed setup instructions
+├── docs/                        # Documentation
+│   ├── DEPLOYMENT.md           # Railway + Vercel deployment guide
+│   ├── CUSTOM_DOMAIN.md        # Namecheap domain setup
+│   ├── API_REFERENCE.md        # Complete API documentation
+│   └── SETUP_GUIDE.md          # Local development setup
 │
-├── notebooks/                # Jupyter research notebooks
-│   ├── Feature 1 AirBnB NLP.ipynb
-│   ├── Amenity Recognition AirBNB.ipynb
-│   └── AI Project Airbnb Feature 3.ipynb
-│
-├── scripts/                  # Utility scripts
-│   ├── setup.sh             # Initial setup script
-│   ├── start-all.sh         # Start both services
-│   ├── start-backend.sh     # Start backend only
-│   ├── start-frontend.sh    # Start frontend only
-│   └── test-api-connection.sh
-│
-└── README.md                 # This file
+├── LICENSE                      # MIT License
+└── README.md                    # This file
 ```
 
-## 💡 Usage Guide
+---
 
-### Guest Mode
+## 💡 How It Works
 
-1. **Search for Listings**: Use natural language queries like:
-   - "2 guests in Salamanca with WiFi under €100"
-   - "spacious apartment near center with kitchen"
-   - "pet friendly place in Retiro"
+### NLP Search Pipeline
+1. User enters natural language query (e.g., "2 guests in centro with WiFi under €100")
+2. spaCy extracts entities (guests, location, amenities, price)
+3. Listings are filtered by extracted criteria
+4. Semantic search ranks results using sentence transformers
+5. Hybrid scoring combines semantic similarity, lexical match, rating, and price
 
-2. **View Listing Details**: Click any listing to see full details, photos, and amenities
+### RAG Neighborhood Chat
+1. User asks question about a neighborhood
+2. Relevant context is retrieved from knowledge base
+3. OpenAI GPT-4o-mini generates contextual answer
+4. Response includes specific information about the listing's neighborhood
 
-3. **Chat About Neighborhoods**: Ask questions like:
-   - "Is this neighborhood safe at night?"
-   - "What restaurants are nearby?"
-   - "How's the public transportation?"
+### CV Amenity Detection
+1. User uploads property photos
+2. YOLOv8 performs object detection
+3. OWL-ViT provides zero-shot classification
+4. Detected objects are mapped to Airbnb amenities
+5. Results are displayed with confidence scores
 
-### Landlord Mode
+### Price Optimization
+1. Current listing features are analyzed
+2. Random Forest model predicts expected price
+3. Feature importance identifies key price drivers
+4. System recommends amenities to reach target price
+5. Estimated price lift is calculated for each suggestion
 
-1. **Fill Property Details**: Add basic information about your listing
+---
 
-2. **Upload Photos**: Add property photos (or use sample photos)
+## 📊 API Endpoints
 
-3. **Detect Amenities**: Use AI to automatically detect amenities from photos
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Health check and endpoint list |
+| `/health` | GET | Quick health check |
+| `/search` | POST | NLP-powered semantic search |
+| `/listings/featured` | GET | Get 8 featured high-rated listings |
+| `/listings/{id}` | GET | Get detailed listing information |
+| `/neighborhood-chat` | POST | RAG-powered Q&A about neighborhoods |
+| `/landlord/prefill` | GET | Get prefilled demo listing data |
+| `/landlord/amenities-from-images` | POST | Detect amenities from photos |
+| `/landlord/price-suggestions` | POST | Get price optimization recommendations |
 
-4. **Optimize Price**: Get ML-powered price suggestions and amenity recommendations
+**Interactive API docs:** Visit `https://your-backend-url/docs` when running
 
-## 🧪 Testing the API
+👉 **See [docs/API_REFERENCE.md](docs/API_REFERENCE.md)** for detailed API documentation
 
-### Using the Interactive Docs
+---
 
-Visit http://localhost:8000/docs for Swagger UI with interactive API testing.
+## 🔧 Configuration
 
-### Using curl
+### Backend Environment Variables
 
+Required for deployment (Railway):
 ```bash
-# Health check
-curl http://localhost:8000/
-
-# Search listings
-curl -X POST http://localhost:8000/search \
-  -H "Content-Type: application/json" \
-  -d '{"query": "2 guests with WiFi under 100"}'
-
-# Get featured listings
-curl http://localhost:8000/listings/featured
-
-# Get listing details
-curl http://localhost:8000/listings/{listing_id}
+OPENAI_API_KEY=sk-...                          # For RAG chat feature
+ALLOWED_ORIGINS=https://your-frontend-url.com  # For CORS
 ```
 
-### Using the Test Script
+### Frontend Environment Variables
 
+Required for deployment (Vercel):
 ```bash
-./scripts/test-api-connection.sh
+VITE_API_BASE_URL=https://your-backend-url.com  # Backend API URL
 ```
 
-## 🔧 Development
+👉 **See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for step-by-step configuration
 
-### Project Architecture
+---
 
-The application follows a service-oriented architecture:
+## 🌐 Deployment
 
-- **Data Service**: Handles all database operations
-- **NLP Service**: Query parsing, semantic search, entity extraction
-- **RAG Service**: Retrieval-augmented generation for chat
-- **CV Service**: Computer vision amenity detection
-- **Price Service**: Price prediction and optimization
+### Production Deployment
 
-### Adding New Features
+The application is designed for easy deployment:
 
-1. **Backend**: Add endpoint in `main.py`, implement logic in appropriate service file
-2. **Frontend**: Create components in `src/components/`, add pages in `src/pages/`
-3. **API Client**: Update `src/lib/api.ts` with new API calls
+- **Backend → Railway**: Automatic data preparation, ML model loading, health checks
+- **Frontend → Vercel**: Optimized builds, global CDN, automatic HTTPS
 
-### Running in Development Mode
+**Deployment features:**
+- ✅ Automatic data download and preparation
+- ✅ Cached ML embeddings for fast subsequent deployments  
+- ✅ Health checks with extended timeouts for ML initialization
+- ✅ Real-time startup logs with progress indicators
+- ✅ Auto-scaling and monitoring
 
-Both servers run with hot reload enabled:
-- Backend: Changes to `.py` files automatically reload the server
-- Frontend: Changes to `.tsx` files trigger instant HMR updates
+**First deployment:** 5-10 minutes (downloads data, computes embeddings)  
+**Subsequent deployments:** 2-3 minutes (uses cached embeddings)
 
-For detailed development instructions, see [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md)
+👉 **See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for complete deployment guide
+
+### Custom Domain
+
+Configure a custom domain from Namecheap:
+- Frontend: `yourdomain.com`
+- Backend API: `api.yourdomain.com`
+
+👉 **See [docs/CUSTOM_DOMAIN.md](docs/CUSTOM_DOMAIN.md)** for domain setup guide
+
+---
 
 ## 📚 Documentation
 
-- **[API Reference](docs/API_REFERENCE.md)** - Complete API endpoint documentation
-- **[Setup Guide](docs/SETUP_GUIDE.md)** - Detailed installation and configuration
-- **[Interactive API Docs](http://localhost:8000/docs)** - Swagger UI (when server is running)
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Deploy to Railway + Vercel
+- **[Custom Domain Setup](docs/CUSTOM_DOMAIN.md)** - Configure Namecheap domain
+- **[Local Setup Guide](docs/SETUP_GUIDE.md)** - Run locally for development
+- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
+
+---
+
+## 🧪 Testing
+
+### Test Backend
+
+```bash
+# Health check
+curl https://your-backend.up.railway.app/health
+
+# Search
+curl -X POST https://your-backend.up.railway.app/search \
+  -H "Content-Type: application/json" \
+  -d '{"query": "2 guests with WiFi under 100"}'
+
+# Featured listings
+curl https://your-backend.up.railway.app/listings/featured
+```
+
+### Test Frontend
+
+1. Visit your deployed frontend URL
+2. Try searching: "cheap apartment in centro with WiFi"
+3. Open a listing and view details
+4. Test neighborhood chat (requires OpenAI API key)
+5. Try landlord mode features
+
+---
 
 ## 🐛 Troubleshooting
 
-### Backend won't start
+### Backend Issues
+
+**502 Bad Gateway:**
+- First deployment takes 5-10 minutes
+- Check Railway logs for initialization progress
+- Wait for "✅ Backend ready!" message
+
+**CORS Errors:**
+- Verify `ALLOWED_ORIGINS` in Railway matches Vercel URL exactly
+- Check that Railway redeployed after changing variables
+
+### Frontend Issues
+
+**Failed to fetch:**
+- Verify `VITE_API_BASE_URL` in Vercel matches Railway URL
+- Redeploy Vercel after changing environment variables
+
+👉 **See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** troubleshooting section for more solutions
+
+---
+
+## 🔄 Updating the Application
+
+Both Railway and Vercel auto-deploy when you push to GitHub:
 
 ```bash
-# Check if virtual environment exists
-ls backend/venv/
+# Make changes locally
+git add .
+git commit -m "Your changes"
+git push
 
-# Check if database exists
-ls backend/data/airbnb.db
-
-# Re-run setup if missing
-./scripts/setup.sh
+# Both services will automatically deploy
+# Railway: ~2-3 minutes
+# Vercel: ~2-3 minutes
 ```
 
-### Frontend won't start
+Monitor deployments in respective dashboards.
 
-```bash
-# Check if node_modules exists
-ls frontend/node_modules/
-
-# Reinstall dependencies
-cd frontend && npm install
-```
-
-### RAG chat not working
-
-Ensure you have a valid OpenAI API key in `backend/.env`:
-```bash
-cat backend/.env | grep OPENAI_API_KEY
-```
-
-### Import errors or missing modules
-
-```bash
-# Activate venv and reinstall dependencies
-cd backend
-source venv/bin/activate
-pip install -r requirements.txt
-```
+---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
+Contributions are welcome! Please:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -292,34 +319,56 @@ Contributions are welcome! Please follow these steps:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-Please ensure your code:
-- Follows existing code style
-- Includes appropriate comments
-- Updates documentation as needed
-- Works with both backend and frontend
+---
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+---
+
 ## 🎓 Academic Context
 
 Built for **IE University** as a demonstration of practical machine learning applications in real-world scenarios.
 
+### Key Learning Outcomes
+- Production ML deployment with Railway + Vercel
+- NLP-powered semantic search implementation
+- RAG-based conversational AI
+- Computer vision for practical applications
+- ML-driven price optimization
+- Full-stack application architecture
+
+---
+
 ## 🙏 Acknowledgments
 
-- Dataset: Madrid Airbnb listings from Inside Airbnb
-- ML Models: HuggingFace Transformers, spaCy, Ultralytics YOLOv8
-- UI Components: shadcn/ui
-- Icons: Lucide React
+- **Dataset:** Madrid Airbnb listings from [Inside Airbnb](http://insideairbnb.com)
+- **ML Models:** HuggingFace Transformers, spaCy, Ultralytics YOLOv8
+- **UI Components:** [shadcn/ui](https://ui.shadcn.com)
+- **Icons:** [Lucide React](https://lucide.dev)
+
+---
 
 ## 📞 Support
 
 For issues, questions, or suggestions:
-- Open an issue on GitHub
-- Check the [Setup Guide](docs/SETUP_GUIDE.md) for common problems
-- Review [API Reference](docs/API_REFERENCE.md) for endpoint details
+- 📖 Check the [documentation](docs/)
+- 🐛 Open an issue on GitHub
+- 📧 Contact the maintainers
+
+---
+
+## 🌟 Features Roadmap
+
+- [ ] Multi-city support (Barcelona, Lisbon, etc.)
+- [ ] Advanced filtering (pet-friendly, accessibility features)
+- [ ] Booking simulation
+- [ ] Host analytics dashboard
+- [ ] Multi-language support
 
 ---
 
 **⭐ If you find this project useful, please consider giving it a star!**
+
+**🚀 Ready to deploy?** → [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
