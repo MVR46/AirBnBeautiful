@@ -216,7 +216,7 @@ The application is designed for easy deployment:
 - ✅ Real-time startup logs with progress indicators
 - ✅ Auto-scaling and monitoring
 
-**First deployment:** 7-10 minutes (downloads data, computes embeddings)  
+**First deployment:** Up to 10 minutes (downloads data, computes embeddings)  
 **Subsequent deployments:** 2-3 minutes (uses cached embeddings)
 
 👉 **See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for complete deployment guide
