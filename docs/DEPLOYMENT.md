@@ -54,11 +54,11 @@ The repository is already configured for deployment with:
 
 6. **Deploy!**
    - Railway will automatically start the deployment
-   - **First deployment takes up to 10 minutes** because:
-     - ML dependencies are installed (~2-3 min)
-     - Airbnb dataset is downloaded and processed (~2-3 min)
-     - ML models are loaded (~2-3 min)
-     - Embeddings are computed (~2-3 min)
+   - **First deployment takes 10-15 minutes** because:
+     - ML dependencies are installed (~3-4 min)
+     - Airbnb dataset is downloaded and processed (~3-4 min)
+     - ML models are loaded (~3-4 min)
+     - Embeddings are computed (~3-4 min)
    - Subsequent deployments are faster (~2-3 min with cached embeddings)
 
 7. **Monitor the deployment:**
@@ -235,14 +235,14 @@ curl https://your-app.up.railway.app/listings/featured
 **Symptoms:** Backend returns 502 error
 
 **Common Causes:**
-1. **Still starting up** - First deployment takes up to 10 minutes
+1. **Still starting up** - First deployment takes 10-15 minutes
    - Check logs for progress through initialization steps
    - Wait for "✅ Backend ready!" message
 
 2. **Stuck during initialization** - Look at Railway logs to see where it's stuck:
-   - Step 2 (NLP models): Downloads spaCy model (~2-3 min)
-   - Step 6 (Embeddings): Computes embeddings on first run (~2-3 min)
-   - If stuck > 10 minutes, redeploy
+   - Step 2 (NLP models): Downloads spaCy model (~3-4 min)
+   - Step 6 (Embeddings): Computes embeddings on first run (~3-4 min)
+   - If stuck > 15 minutes, redeploy
 
 3. **Out of memory** - ML models need 1GB+ RAM
    - Upgrade Railway plan if needed
