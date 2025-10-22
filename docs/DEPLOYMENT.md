@@ -54,7 +54,7 @@ The repository is already configured for deployment with:
 
 6. **Deploy!**
    - Railway will automatically start the deployment
-   - **First deployment takes 5-10 minutes** because:
+   - **First deployment takes 7-10 minutes** because:
      - ML dependencies are installed (~2-3 min)
      - Airbnb dataset is downloaded and processed (~2-3 min)
      - ML models are loaded (~1 min)
@@ -234,7 +234,7 @@ curl https://your-app.up.railway.app/listings/featured
 **Symptoms:** Backend returns 502 error
 
 **Common Causes:**
-1. **Still starting up** - First deployment takes 5-10 minutes
+1. **Still starting up** - First deployment takes 7-10 minutes
    - Check logs for progress through initialization steps
    - Wait for "✅ Backend ready!" message
 
