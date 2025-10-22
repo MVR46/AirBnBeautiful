@@ -1,5 +1,5 @@
 // API client with error handling
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'airbnbeautiful-production.up.railway.app';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://airbnbeautiful-production.up.railway.app';
 
 interface ApiError {
   message: string;

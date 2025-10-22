@@ -45,6 +45,8 @@ echo "🌐 Starting FastAPI server on port ${PORT:-8000}"
 echo "============================================================"
 echo ""
 
-# Start the server
-exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Start the server with increased timeout for startup
+# --timeout-graceful-shutdown 120: Allow 2 minutes for graceful shutdown
+# --timeout-keep-alive 5: Keep connections alive
+exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-graceful-shutdown 120 --timeout-keep-alive 5
 

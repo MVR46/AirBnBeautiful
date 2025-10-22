@@ -58,33 +58,40 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     global data_service, df_listings, listing_texts, listing_embeddings
     
-    print("\n" + "="*60)
-    print("Starting Airbnb ML Backend")
-    print("="*60)
+    import sys
+    sys.stdout.flush()  # Force flush to see logs immediately
+    
+    print("\n" + "="*60, flush=True)
+    print("Starting Airbnb ML Backend", flush=True)
+    print("="*60, flush=True)
     
     # Initialize data service
-    print("\n1. Loading listings database...")
+    print("\n1. Loading listings database...", flush=True)
     data_service = DataService()
     df_listings = data_service.get_all_listings()
-    print(f"   Loaded {len(df_listings)} listings")
+    print(f"   Loaded {len(df_listings)} listings", flush=True)
     
     # Initialize NLP models
-    print("\n2. Initializing NLP models...")
+    print("\n2. Initializing NLP models...", flush=True)
     nlp_service.init_nlp_models()
+    print("   ✓ NLP models loaded", flush=True)
     
     # Prepare amenities for NLP
-    print("\n3. Preparing amenity normalization...")
+    print("\n3. Preparing amenity normalization...", flush=True)
     df_listings = nlp_service.prepare_amenities_norm(df_listings)
+    print("   ✓ Amenities normalized", flush=True)
     
     # Build amenity clusters and label pools
-    print("\n4. Building amenity clusters...")
+    print("\n4. Building amenity clusters...", flush=True)
     nlp_service.build_amenity_clusters(df_listings)
+    print("   ✓ Clusters built", flush=True)
     
-    print("\n5. Building label pools (neighborhoods, types)...")
+    print("\n5. Building label pools (neighborhoods, types)...", flush=True)
     nlp_service.build_label_pools(df_listings)
+    print("   ✓ Label pools ready", flush=True)
     
     # Prepare listing texts and embeddings
-    print("\n6. Preparing listing embeddings...")
+    print("\n6. Preparing listing embeddings...", flush=True)
     
     def _concat_text(row: pd.Series) -> str:
         name = str(row.get('name', '') or '').strip()
@@ -95,18 +102,22 @@ async def lifespan(app: FastAPI):
         return txt if txt else name
     
     listing_texts = df_listings.apply(_concat_text, axis=1).tolist()
+    print(f"   ✓ Prepared {len(listing_texts)} listing texts", flush=True)
     
     # Check for cached embeddings
     emb_path = Path('data/listing_embeddings.npy')
     if emb_path.exists():
         try:
             listing_embeddings = np.load(emb_path)
-            print(f"   Loaded cached embeddings: {listing_embeddings.shape}")
-        except:
+            print(f"   ✓ Loaded cached embeddings: {listing_embeddings.shape}", flush=True)
+        except Exception as e:
+            print(f"   ⚠ Failed to load cached embeddings: {e}", flush=True)
             listing_embeddings = None
+    else:
+        listing_embeddings = None
     
     if listing_embeddings is None:
-        print("   Computing listing embeddings...")
+        print("   Computing listing embeddings (this may take 2-3 minutes)...", flush=True)
         listing_embeddings = nlp_service.embed_model.encode(
             listing_texts,
             batch_size=64,
@@ -117,31 +128,36 @@ async def lifespan(app: FastAPI):
         # Cache for next time
         os.makedirs('data', exist_ok=True)
         np.save(emb_path, listing_embeddings)
-        print(f"   Saved embeddings to {emb_path}")
+        print(f"   ✓ Saved embeddings to {emb_path}", flush=True)
     
     # Build TF-IDF index
-    print("\n7. Building TF-IDF index...")
+    print("\n7. Building TF-IDF index...", flush=True)
     nlp_service.build_tfidf_index(df_listings, listing_texts)
+    print("   ✓ TF-IDF index ready", flush=True)
     
     # Build amenities_canon column for filtering
-    print("\n8. Building canonical amenities for filtering...")
+    print("\n8. Building canonical amenities for filtering...", flush=True)
     df_listings['amenities_canon'] = df_listings['amenities_norm'].apply(
         lambda xs: sorted({nlp_service.AMEN_CANON.get(nlp_service.norm_txt(x))
                           for x in (xs or [])
                           if nlp_service.AMEN_CANON.get(nlp_service.norm_txt(x))})
     )
+    print("   ✓ Canonical amenities ready", flush=True)
     
     # Initialize RAG service
-    print("\n9. Initializing RAG service...")
+    print("\n9. Initializing RAG service...", flush=True)
     rag_service.init_rag_service(nlp_service.embed_model, NEIGHBORHOOD_DATA)
+    print("   ✓ RAG service ready", flush=True)
     
     # Train price model
-    print("\n10. Training price optimization model...")
+    print("\n10. Training price optimization model...", flush=True)
     price_service.train_price_model(df_listings)
+    print("   ✓ Price model trained", flush=True)
     
-    print("\n" + "="*60)
-    print("Backend ready! All services initialized.")
-    print("="*60 + "\n")
+    print("\n" + "="*60, flush=True)
+    print("✅ Backend ready! All services initialized.", flush=True)
+    print("="*60 + "\n", flush=True)
+    sys.stdout.flush()
     
     yield
     
@@ -161,13 +177,20 @@ app = FastAPI(
 # Get allowed origins from environment variable or use defaults
 allowed_origins_str = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:8080,http://localhost:5173,https://*.vercel.app"
+    "http://localhost:8080,http://localhost:5173"
 )
 allowed_origins = [origin.strip() for origin in allowed_origins_str.split(",")]
+
+# Add wildcard support for Vercel preview deployments
+allow_origin_regex = os.getenv(
+    "ALLOWED_ORIGINS_REGEX",
+    r"https://.*\.vercel\.app"
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -224,6 +247,7 @@ async def root():
     """Health check."""
     return {
         "status": "running",
+        "message": "AirBnBeautiful ML Backend is ready",
         "endpoints": [
             "POST /search",
             "GET /listings/featured",
@@ -234,6 +258,12 @@ async def root():
             "POST /landlord/price-suggestions"
         ]
     }
+
+
+@app.get("/health")
+async def health_check():
+    """Simple health check that responds immediately."""
+    return {"status": "healthy"}
 
 
 @app.get("/listings/featured")
