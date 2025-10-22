@@ -57,6 +57,8 @@ Before starting, ensure you have:
 
 > **Important:** The backend includes a `nixpacks.toml` file that installs system dependencies required for OpenCV and YOLO (libGL, libGLib, etc.). Railway will automatically detect and use this configuration.
 
+> **✨ NEW: Automatic Data Preparation** - The backend now automatically downloads and prepares the Airbnb dataset on first deployment! No manual data setup required. See details below.
+
 1. **Go to [railway.app](https://railway.app)** and sign in with GitHub
 
 2. **Click "New Project"** → **"Deploy from GitHub repo"**
@@ -73,21 +75,35 @@ Before starting, ensure you have:
    - Add these variables:
      ```
      OPENAI_API_KEY=your-actual-openai-key
-     PORT=8000
-     PYTHON_VERSION=3.9.18
      ```
+   - **Note:** `PORT` and `PYTHON_VERSION` are automatically set by Railway
 
-6. **Configure Start Command:**
-   - Go to **Settings** → **Deploy**
-   - Set custom start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+6. **Deploy!**
+   - Railway will automatically use the `Procfile` to start the app
+   - **First deployment takes 5-10 minutes** because:
+     - ML dependencies are installed (~2-3 min)
+     - Airbnb dataset is downloaded and processed (~2-3 min)
+     - ML models are loaded (~1 min)
+   - Subsequent deployments are faster (~2-3 min)
 
-7. **Wait for deployment** (this will take 5-10 minutes due to ML dependencies)
+7. **Monitor the deployment:**
+   - Click on the **Deployments** tab
+   - Watch the logs - you should see:
+     ```
+     ⚠️  Database not found at data/airbnb.db
+     📦 Preparing data (this may take 2-3 minutes on first deployment)...
+     Loading Madrid dataset...
+     ✅ Data preparation completed successfully!
+     🌐 Starting FastAPI server...
+     ```
 
 8. **Get your Railway URL:**
    - Go to **Settings** → **Networking**
    - Copy the public URL (e.g., `https://your-app.up.railway.app`)
    - Test it by visiting: `https://your-app.up.railway.app/`
    - You should see: `{"status": "running", "endpoints": [...]}`
+
+> **💡 Pro Tip:** The startup script (`start.sh`) automatically checks if the database exists. If not, it downloads the Madrid Airbnb dataset from GitHub and prepares it. This means you can deploy directly without any manual data setup!
 
 ### Step 1.3: Set Up Custom Domain for Backend (Optional)
 
@@ -329,7 +345,32 @@ Before starting, ensure you have:
 - Clear your browser cache or try incognito mode
 - Flush DNS: `ipconfig /flushdns` (Windows) or `sudo dscacheutil -flushcache` (Mac)
 
-### Issue 4: Railway build fails with OpenCV/libGL error
+### Issue 4: Database not found error (FIXED)
+
+**Symptoms:** Deployment fails with `FileNotFoundError: Database not found: data/airbnb.db`
+
+**Status:** ✅ **This issue is now fixed automatically!**
+
+**What changed:**
+- The backend now includes an automatic data preparation feature
+- On first deployment, if the database doesn't exist, it's automatically created
+- The `start.sh` script handles this before starting the server
+
+**What you'll see in logs:**
+```
+⚠️  Database not found at data/airbnb.db
+📦 Preparing data (this may take 2-3 minutes on first deployment)...
+Loading Madrid dataset...
+✅ Data preparation completed successfully!
+```
+
+**If you still see this error:**
+1. Check that `start.sh` file exists in your backend directory
+2. Verify the `Procfile` contains: `web: bash start.sh`
+3. Check Railway logs for network issues during dataset download
+4. Try redeploying - Railway will retry the data preparation
+
+### Issue 5: Railway build fails with OpenCV/libGL error
 
 **Symptoms:** Deployment fails with error: `ImportError: libGL.so.1: cannot open shared object file`
 
@@ -351,7 +392,7 @@ Before starting, ensure you have:
 - Railway will automatically detect and install these dependencies
 - Redeploy after adding the file
 
-### Issue 5: Railway build fails (general)
+### Issue 6: Railway build fails (general)
 
 **Symptoms:** Deployment fails with module import errors
 
@@ -361,7 +402,7 @@ Before starting, ensure you have:
 - Ensure Python version is set to 3.9
 - Some ML models may need more memory - upgrade Railway plan if needed
 
-### Issue 6: Vercel build fails
+### Issue 7: Vercel build fails
 
 **Symptoms:** Deployment fails during build
 
@@ -371,7 +412,7 @@ Before starting, ensure you have:
 - Try building locally: `npm run build`
 - Check if `VITE_API_BASE_URL` is set correctly
 
-### Issue 7: Environment variables not updating
+### Issue 8: Environment variables not updating
 
 **Symptoms:** Changes to env vars don't take effect
 
