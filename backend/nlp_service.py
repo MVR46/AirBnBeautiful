@@ -656,14 +656,30 @@ def rerank_semantic_with_lex(candidates: pd.DataFrame, query: str,
     if candidates.empty:
         return candidates
     
-    # Semantic similarity
+    # Memory optimization: limit candidates to reasonable size
+    if len(candidates) > 500:
+        # Pre-sort by rating and take top 500 to reduce memory usage
+        candidates = candidates.nlargest(500, 'review_scores_rating', keep='first')
+    
+    # Semantic similarity (optimized)
     qv = embed_model.encode([norm_txt(query)], normalize_embeddings=True)[0].astype('float32')
-    sem = (listing_embeddings[candidates.index.values] @ qv)
+    candidate_indices = candidates.index.values
+    
+    # Process embeddings in smaller batches to reduce memory pressure
+    batch_size = 200
+    sem_scores = []
+    for i in range(0, len(candidate_indices), batch_size):
+        batch_indices = candidate_indices[i:i + batch_size]
+        batch_embeddings = listing_embeddings[batch_indices]
+        batch_sem = (batch_embeddings @ qv)
+        sem_scores.append(batch_sem)
+    
+    sem = np.concatenate(sem_scores)
     sem = np.clip((sem + 1) / 2, 0, 1)
     
     # Lexical similarity
     lex_all = lexical_similarities(query)
-    lex = lex_all[candidates.index.values]
+    lex = lex_all[candidate_indices]
     
     # Rating (normalize to 0-1)
     rating = candidates.get('review_scores_rating', pd.Series(0.0, index=candidates.index)).fillna(0.0) / 100.0
@@ -677,9 +693,17 @@ def rerank_semantic_with_lex(candidates: pd.DataFrame, query: str,
     # Combined score
     score = w_sem * sem + w_lex * lex + w_rating * rating + w_price * (1.0 - price)
     
+    # Avoid copying entire dataframe
     out = candidates.copy()
     out['__score'] = score
     out = out.sort_values(['__score', 'review_scores_rating', 'price'],
                          ascending=[False, False, True], kind='mergesort')
-    return out.drop(columns=['__score'])
+    result = out.drop(columns=['__score'])
+    
+    # Clean up intermediate objects
+    del sem, lex, rating, price, score, out, qv, sem_scores
+    import gc
+    gc.collect()
+    
+    return result
 

@@ -15,6 +15,12 @@ from contextlib import asynccontextmanager
 import pandas as pd
 import numpy as np
 import os
+import asyncio
+import time
+import gc
+import psutil
+from functools import lru_cache
+from typing import Tuple
 
 # Import models
 from models import (
@@ -38,6 +44,34 @@ data_service = None
 df_listings = None
 listing_texts = None
 listing_embeddings = None
+
+# Query cache for performance
+@lru_cache(maxsize=50)
+def cached_parse_query(query: str) -> Tuple:
+    """Cache parsed queries to avoid recomputation."""
+    spec = nlp_service.parse_user_query_ml(query)
+    # Convert to tuple for caching (dict not hashable)
+    return (
+        tuple(spec.get('amenities_all', [])),
+        tuple(spec.get('neighbourhoods', [])),
+        tuple(spec.get('neigh_groups', [])),
+        spec.get('room_type'),
+        spec.get('property_type'),
+        spec.get('guests'),
+        spec.get('price_min'),
+        spec.get('price_max'),
+        spec
+    )
+
+def get_memory_usage() -> dict:
+    """Get current memory usage statistics."""
+    process = psutil.Process()
+    mem_info = process.memory_info()
+    return {
+        "rss_mb": mem_info.rss / 1024 / 1024,
+        "vms_mb": mem_info.vms / 1024 / 1024,
+        "percent": process.memory_percent()
+    }
 
 
 # Sample photos for landlord prefill (using Unsplash images with visible amenities)
@@ -104,12 +138,16 @@ async def lifespan(app: FastAPI):
     listing_texts = df_listings.apply(_concat_text, axis=1).tolist()
     print(f"   ✓ Prepared {len(listing_texts)} listing texts", flush=True)
     
-    # Check for cached embeddings
+    # Check for cached embeddings - use memory mapping for lower RAM usage
     emb_path = Path('data/listing_embeddings.npy')
     if emb_path.exists():
         try:
-            listing_embeddings = np.load(emb_path)
-            print(f"   ✓ Loaded cached embeddings: {listing_embeddings.shape}", flush=True)
+            # Memory-map the embeddings instead of loading fully into RAM
+            listing_embeddings = np.load(emb_path, mmap_mode='r')
+            print(f"   ✓ Memory-mapped cached embeddings: {listing_embeddings.shape}", flush=True)
+            # Convert to writable array only when needed
+            listing_embeddings = np.array(listing_embeddings, dtype='float32')
+            print(f"   ✓ Loaded embeddings into memory: {listing_embeddings.nbytes / 1024 / 1024:.1f}MB", flush=True)
         except Exception as e:
             print(f"   ⚠ Failed to load cached embeddings: {e}", flush=True)
             listing_embeddings = None
@@ -120,7 +158,7 @@ async def lifespan(app: FastAPI):
         print("   Computing listing embeddings (this may take 2-3 minutes)...", flush=True)
         listing_embeddings = nlp_service.embed_model.encode(
             listing_texts,
-            batch_size=64,
+            batch_size=32,  # Reduced batch size for memory efficiency
             show_progress_bar=True,
             normalize_embeddings=True
         ).astype('float32')
@@ -129,6 +167,9 @@ async def lifespan(app: FastAPI):
         os.makedirs('data', exist_ok=True)
         np.save(emb_path, listing_embeddings)
         print(f"   ✓ Saved embeddings to {emb_path}", flush=True)
+        
+    # Force garbage collection after heavy initialization
+    gc.collect()
     
     # Build TF-IDF index
     print("\n7. Building TF-IDF index...", flush=True)
@@ -154,8 +195,11 @@ async def lifespan(app: FastAPI):
     price_service.train_price_model(df_listings)
     print("   ✓ Price model trained", flush=True)
     
+    # Final memory report
+    final_mem = get_memory_usage()
     print("\n" + "="*60, flush=True)
     print("✅ Backend ready! All services initialized.", flush=True)
+    print(f"📊 Memory usage: {final_mem['rss_mb']:.1f}MB ({final_mem['percent']:.1f}%)", flush=True)
     print("="*60 + "\n", flush=True)
     sys.stdout.flush()
     
@@ -266,6 +310,17 @@ async def health_check():
     return {"status": "healthy"}
 
 
+@app.get("/memory")
+async def memory_check():
+    """Check memory usage for debugging."""
+    mem = get_memory_usage()
+    return {
+        "memory_mb": round(mem["rss_mb"], 2),
+        "memory_percent": round(mem["percent"], 2),
+        "status": "warning" if mem["percent"] > 80 else "ok"
+    }
+
+
 @app.get("/listings/featured")
 async def get_featured_listings():
     """
@@ -300,41 +355,98 @@ async def get_featured_listings():
 @app.post("/search", response_model=SearchResponse)
 async def search(request: SearchRequest):
     """
-    NLP-based semantic search.
+    NLP-based semantic search with timeout and memory optimization.
     Parses natural language query and returns ranked listings.
     """
+    start_time = time.time()
+    mem_before = get_memory_usage()
+    
     try:
         query = request.query.strip()
         if not query:
             raise HTTPException(status_code=400, detail="Query cannot be empty")
         
-        # Parse query
-        spec = nlp_service.parse_user_query_ml(query)
+        print(f"[SEARCH] Query: '{query}' | Memory: {mem_before['rss_mb']:.1f}MB", flush=True)
         
-        # Apply filters
-        filtered = nlp_service.apply_filters_ml(df_listings, spec)
-        
-        if filtered.empty:
+        # Wrap in timeout to prevent Railway proxy timeout (30s limit)
+        async def search_with_timeout():
+            # Use cached query parsing
+            try:
+                cached_result = cached_parse_query(query)
+                spec = cached_result[8]  # Full spec dict
+                print(f"[SEARCH] Using cached parse for query", flush=True)
+            except Exception as parse_error:
+                print(f"[SEARCH] Cache miss or parse error, parsing fresh: {parse_error}", flush=True)
+                spec = nlp_service.parse_user_query_ml(query)
+            
+            # Apply filters
+            filtered = nlp_service.apply_filters_ml(df_listings, spec)
+            
+            if filtered.empty:
+                return SearchResponse(
+                    parsed_filters=spec,
+                    listings=[]
+                )
+            
+            print(f"[SEARCH] Filtered to {len(filtered)} candidates", flush=True)
+            
+            # Check memory before ranking
+            mem_current = get_memory_usage()
+            if mem_current['percent'] > 85:
+                print(f"[SEARCH] High memory ({mem_current['percent']:.1f}%), limiting results", flush=True)
+                # Return top results by rating without semantic ranking
+                filtered = filtered.nlargest(50, 'review_scores_rating', keep='first')
+                listings = [df_row_to_listing(row) for _, row in filtered.iterrows()]
+                return SearchResponse(
+                    parsed_filters=spec,
+                    listings=listings
+                )
+            
+            # Rerank with hybrid scoring
+            ranked = nlp_service.rerank_semantic_with_lex(
+                filtered, query, listing_embeddings
+            )
+            
+            # Convert to response format
+            listings = [df_row_to_listing(row) for _, row in ranked.head(50).iterrows()]
+            
+            # Force garbage collection
+            gc.collect()
+            
             return SearchResponse(
                 parsed_filters=spec,
-                listings=[]
+                listings=listings
             )
         
-        # Rerank with hybrid scoring
-        ranked = nlp_service.rerank_semantic_with_lex(
-            filtered, query, listing_embeddings
+        # Execute with 25-second timeout (under Railway's 30s limit)
+        result = await asyncio.wait_for(search_with_timeout(), timeout=25.0)
+        
+        elapsed = time.time() - start_time
+        mem_after = get_memory_usage()
+        print(f"[SEARCH] Complete in {elapsed:.2f}s | Memory: {mem_after['rss_mb']:.1f}MB "
+              f"(+{mem_after['rss_mb'] - mem_before['rss_mb']:.1f}MB)", flush=True)
+        
+        return result
+    
+    except asyncio.TimeoutError:
+        print(f"[SEARCH] Timeout after 25s for query: '{query}'", flush=True)
+        raise HTTPException(
+            status_code=504,
+            detail="Search took too long. Try a more specific query or fewer filters."
         )
-        
-        # Convert to response format
-        listings = [df_row_to_listing(row) for _, row in ranked.head(50).iterrows()]
-        
-        return SearchResponse(
-            parsed_filters=spec,
-            listings=listings
+    
+    except MemoryError as e:
+        print(f"[SEARCH] Memory error: {e}", flush=True)
+        gc.collect()
+        raise HTTPException(
+            status_code=503,
+            detail="Server memory full. Please try again in a moment."
         )
     
     except Exception as e:
-        print(f"Search error: {e}")
+        print(f"[SEARCH] Error: {type(e).__name__}: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 

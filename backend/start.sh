@@ -45,8 +45,14 @@ echo "🌐 Starting FastAPI server on port ${PORT:-8000}"
 echo "============================================================"
 echo ""
 
-# Start the server with increased timeout for startup
-# --timeout-graceful-shutdown 120: Allow 2 minutes for graceful shutdown
-# --timeout-keep-alive 5: Keep connections alive
-exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-graceful-shutdown 120 --timeout-keep-alive 5
+# Start the server with Railway-optimized settings
+# --workers 1: Single worker to minimize memory usage on free tier
+# --timeout-keep-alive 20: Keep alive under Railway's 30s timeout
+# --limit-max-requests 100: Recycle worker to prevent memory leaks
+# --timeout-graceful-shutdown 60: Allow time for cleanup
+exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} \
+    --workers 1 \
+    --timeout-keep-alive 20 \
+    --limit-max-requests 100 \
+    --timeout-graceful-shutdown 60
 
