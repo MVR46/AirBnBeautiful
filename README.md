@@ -48,21 +48,9 @@ A production-ready full-stack machine learning application showcasing advanced M
 
 ## 🚀 Quick Start
 
-### Option 1: Deploy to Production (Recommended)
+The full application is accessible on the domain: **[rbnbeatiful.casa](rbnbeatiful.casa)** / **[www.rbnbeatiful.casa ](www.rbnbeatiful.casa )**
 
-Deploy the full application to Railway (backend) and Vercel (frontend):
-
-👉 **See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for complete deployment guide
-
-**Summary:**
-1. Deploy backend to Railway (5-10 min first time)
-2. Deploy frontend to Vercel (2-3 min)
-3. Connect them with environment variables
-
-**Optional:** Configure custom domain with Namecheap  
-👉 **See [docs/CUSTOM_DOMAIN.md](docs/CUSTOM_DOMAIN.md)**
-
-### Option 2: Run Locally
+### Run Locally
 
 For local development and testing:
 
@@ -259,71 +247,11 @@ curl https://your-backend.up.railway.app/listings/featured
 
 ### Test Frontend
 
-1. Visit your deployed frontend URL
+1. Visit your local host URL
 2. Try searching: "cheap apartment in centro with WiFi"
 3. Open a listing and view details
 4. Test neighborhood chat (requires OpenAI API key)
 5. Try landlord mode features
-
----
-
-## 🐛 Troubleshooting
-
-### Backend Issues
-
-**502 Bad Gateway:**
-- First deployment takes 5-10 minutes
-- Check Railway logs for initialization progress
-- Wait for "✅ Backend ready!" message
-
-**CORS Errors:**
-- Verify `ALLOWED_ORIGINS` in Railway matches Vercel URL exactly
-- Check that Railway redeployed after changing variables
-
-### Frontend Issues
-
-**Failed to fetch:**
-- Verify `VITE_API_BASE_URL` in Vercel matches Railway URL
-- Redeploy Vercel after changing environment variables
-
-👉 **See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** troubleshooting section for more solutions
-
----
-
-## 🔄 Updating the Application
-
-Both Railway and Vercel auto-deploy when you push to GitHub:
-
-```bash
-# Make changes locally
-git add .
-git commit -m "Your changes"
-git push
-
-# Both services will automatically deploy
-# Railway: ~2-3 minutes
-# Vercel: ~2-3 minutes
-```
-
-Monitor deployments in respective dashboards.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -355,7 +283,7 @@ Built for **IE University** as a demonstration of practical machine learning app
 For issues, questions, or suggestions:
 - 📖 Check the [documentation](docs/)
 - 🐛 Open an issue on GitHub
-- 📧 Contact the maintainers
+- 📧 Contact mttmainetti@gmail.com
 
 ---
 
@@ -370,5 +298,3 @@ For issues, questions, or suggestions:
 ---
 
 **⭐ If you find this project useful, please consider giving it a star!**
-
-**🚀 Ready to deploy?** → [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
