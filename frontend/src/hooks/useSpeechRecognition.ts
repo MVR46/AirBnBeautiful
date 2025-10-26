@@ -85,24 +85,31 @@ export const useSpeechRecognition = ({
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error('Speech recognition error event:', event.error, event);
       setIsRecording(false);
       setIsProcessing(false);
       
       switch (event.error) {
         case 'no-speech':
-          setError('No speech detected. Please try again.');
+          setError('No speech detected. Please speak clearly and try again.');
           break;
         case 'audio-capture':
-          setError('Microphone not detected. Please check your device.');
+          setError('Microphone not found. Please connect a microphone and refresh the page.');
           break;
         case 'not-allowed':
-          setError('Microphone access denied. Please enable permissions.');
+          setError('Microphone access denied. Please allow microphone access in your browser settings and refresh the page.');
           break;
         case 'network':
-          setError('Network error. Please check your connection.');
+          setError('Network error: Cannot connect to speech recognition service. Please check your internet connection and ensure you are using HTTPS or localhost.');
+          break;
+        case 'service-not-allowed':
+          setError('Speech recognition service is not allowed. Please ensure you are using HTTPS or localhost.');
+          break;
+        case 'aborted':
+          setError('Speech recognition was aborted. Please try again.');
           break;
         default:
-          setError(`Error: ${event.error}`);
+          setError(`Speech recognition error: ${event.error}. Please check browser console for details.`);
       }
     };
 
@@ -122,7 +129,13 @@ export const useSpeechRecognition = ({
 
   const startRecording = useCallback(() => {
     if (!isSupported()) {
-      setError('Speech recognition is not supported in your browser.');
+      setError('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    // Check for HTTPS in production
+    if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      setError('Speech recognition requires HTTPS. Please use a secure connection.');
       return;
     }
 
@@ -132,8 +145,13 @@ export const useSpeechRecognition = ({
         setError(null);
         recognitionRef.current.start();
       } catch (err) {
-        setError('Failed to start recording. Please try again.');
-        console.error(err);
+        const error = err as Error;
+        if (error.message.includes('already started')) {
+          setError('Recording is already in progress.');
+        } else {
+          setError('Failed to start recording. Please check microphone permissions and try again.');
+        }
+        console.error('Speech recognition error:', err);
       }
     }
   }, [isRecording, isSupported]);
