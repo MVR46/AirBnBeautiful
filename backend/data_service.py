@@ -8,16 +8,32 @@ from pathlib import Path
 
 
 class DataService:
-    def __init__(self, db_path='data/airbnb.db'):
+    def __init__(self, db_path='data/airbnb.db', auto_prepare=True):
         self.db_path = db_path
         self.conn = None
+        self.auto_prepare = auto_prepare
         self._connect()
         
     def _connect(self):
         """Connect to SQLite database."""
         if not Path(self.db_path).exists():
-            raise FileNotFoundError(f"Database not found: {self.db_path}. Run prepare_data.py first.")
+            if self.auto_prepare:
+                print(f"\n⚠️  Database not found at {self.db_path}")
+                print("📦 Running data preparation automatically...")
+                self._prepare_data()
+            else:
+                raise FileNotFoundError(f"Database not found: {self.db_path}. Run prepare_data.py first.")
         self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
+    
+    def _prepare_data(self):
+        """Run data preparation if database doesn't exist."""
+        try:
+            import prepare_data
+            prepare_data.main()
+            print("✅ Data preparation completed successfully!")
+        except Exception as e:
+            print(f"❌ Error during data preparation: {e}")
+            raise RuntimeError(f"Failed to prepare database: {e}")
         
     def get_all_listings(self) -> pd.DataFrame:
         """Load all listings as DataFrame."""

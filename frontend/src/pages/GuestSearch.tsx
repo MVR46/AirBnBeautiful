@@ -93,6 +93,7 @@ const GuestSearch = () => {
             placeholder="e.g., 2 guests, 3 nights in Chueca next weekend, budget €120/night, close to metro"
             disabled={loading}
             className="mx-auto max-w-2xl"
+            clearOnSubmit={false}
           />
           <p className="mt-3 text-center text-xs text-muted-foreground">
             Try: "Studio apartment in Malasaña, WiFi and kitchen, under €100/night"
